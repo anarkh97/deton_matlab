@@ -91,15 +91,16 @@ classdef MixtureModel
             invrho = 1/rho;
         
 %             Avoid division by zero
-            if U(5) < eps
-                V(1) = eps;
-            elseif abs(1 - U(5)) < eps
-                V(2) = eps;
-            else
-                V(1) = U(1)/U(5);
-                V(2) = U(2)/(1 - U(5));
-            end
- 
+%             if U(5) < eps
+%                 V(1) = eps;
+%             elseif abs(1 - U(5)) < eps
+%                 V(2) = eps;
+%             else
+%                 V(1) = U(1)/U(5);
+%                 V(2) = U(2)/(1 - U(5));
+%             end
+            V(1) = U(1)/U(5);
+            V(2) = U(2)/(1 - U(5));
             V(3) = U(3)*invrho;
             
             e = (U(4) - 0.5*rho*V(3)*V(3))*invrho;
@@ -159,11 +160,18 @@ classdef MixtureModel
 %             NOTE: With iterative approach we can use existing implementations of VarFcn's w/o
 %             adding new functinalities.
 %             This might slow down the code.
-
-            eqn     = @(x) obj.Fun(rho_1, rho_2, e, lambda, x);
-            options = optimoptions('fsolve', 'Display', 'iter', 'MaxIterations', 20);
             try
-                p       = fsolve(eqn, 0, options);
+                if abs(lambda) < eps
+                    % found a pure fluid, save computation
+                    p = obj.mat1.GetPressure(rho_1, e);
+                elseif abs(1 - lambda) < eps
+                    % found a pure fluid, save computation
+                    p = obj.mat2.GetPressure(rho_2, e);
+                else
+                    eqn     = @(x) obj.Fun(rho_1, rho_2, e, lambda, x);
+                    options = optimoptions('fsolve', 'Display', 'none', 'MaxIterations', 20);
+                    p = fsolve(eqn, 0, options);
+                end
             catch ME
                 error("rho_1: %e, rho_2: %e, e: %e, lambda: %e\n", rho_1, rho_2, e, lambda);
             end

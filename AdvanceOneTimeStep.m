@@ -36,13 +36,13 @@ for i=1:N
     
     rho = lambda*rho_1 + (1 - lambda)*rho_2;
     e   = mixture.GetInternalEnergyPerUnitMass(rho_1, rho_2, p, lambda);
-%     try
+    try
     c   = mixture.GetSoundSpeed(rho_1, rho_2, e, lambda);
-%     catch ME
-%         error("*** Error: Negative speed of sound encountered at Point[%d] x = %e. " ...
-%             + "The state variables are (%e, %e, %e) with material id %d.", ...
-%             i, x(i), rho, u, p, Id(i));
-%     end
+    catch ME
+        error("*** Error: Negative speed of sound encountered at Point[%d] x = %e. " ...
+            + "The state variables are (%e, %e, %e).", ...
+            i, x(i), rho, u, p);
+    end
     
     F(1, i) = lambda*rho_1*u;
     F(2, i) = (1 - lambda)*rho_2*u;
@@ -50,13 +50,13 @@ for i=1:N
     F(4, i) = u*(E + p);
     F(5, i) = lambda*u;
     
-    nu(i)   = 0.5*(abs(u) + c);
+    nu(i)   = abs(u) + c;
     
 end
     
 % Evaluate numerical flux -- LLF
 nu = max(nu(1:end-1), nu(2:end));
-F_interm = 0.5*(F(:, 1:end-1) + F(:, 2:end)) + nu.*(U(:, 1:end-1) - U(:, 2:end));
+F_interm = 0.5*(F(:, 1:end-1) + F(:, 2:end) - nu.*(U(:, 2:end) - U(:, 1:end-1)));
 
 % Append boundary values   
 F = [F(:, 1) , F_interm , F(:, end)];

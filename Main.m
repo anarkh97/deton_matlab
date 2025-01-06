@@ -21,7 +21,7 @@ mixture = MixtureModel(VarFcnSG(1.4, 0), VarFcnSG(1.667, 0));
 rhoIC = [1.0 1.0];  % density 
 uIC = [0 0];        % velocity
 pIC = [500 0.2];    % pressure
-lambdaIC = [1 0];   % volume fraction
+lambdaIC = [1-eps eps];   % volume fraction
 
 % Spatial domain
 N = 50;
@@ -55,17 +55,17 @@ for i=1:N
     if x(i) <= x_interface
 %        Left of interface
         Vn(1, i)   = rhoIC(1);
-        Vn(2, i)   = eps;
+        Vn(2, i)   = rhoIC(2); %eps;
         Vn(3, i)   = uIC(1);
         Vn(4, i)   = pIC(1);
-        Vn(5, i)   = lambdaIC(1);
+        Vn(5, i)   = lambdaIC(1); % + sign(x(i) - x_interface)*eps;
     else
 %        Right of interface
-        Vn(1, i)   = eps;
+        Vn(1, i)   = rhoIC(1); %eps;
         Vn(2, i)   = rhoIC(2);
         Vn(3, i)   = uIC(2);
         Vn(4, i)   = pIC(2);
-        Vn(5, i)   = lambdaIC(2);
+        Vn(5, i)   = lambdaIC(2); % + sign(x(i) - x_interface)*eps;
     end
     
 end

@@ -31,10 +31,10 @@ x = (x_in + dx/2):dx:(x_out-dx/2);
 % Temporal parameters
 t      = 0; 
 dt     = 1e-6; 
-tf     = 3.0e-4;
+tf     = 2.4e-4;
 n      = 0;
 nsteps = round(tf/dt);
-cflmax = 0.1;
+cflmax = 0.8;
 
 % Interface location
 % `x_int` stores the x co-ordinate of the material interface.
@@ -97,8 +97,8 @@ while t<=tf
 %     Save data and update loop
     if (n >= numel(Tn))
 %         MatLab increases array size automatically. Included for clarity.
-        Tn  = padarray(Tn,  [0, numel(Tn) + nsteps], 'post');
-        VVn = padarray(VVn, [0, numel(Tn) + nsteps], 'post');
+        Tn  = resize(Tn,  [1, numel(Tn) + nsteps]);
+        VVn = resize(VVn, [5*N, numel(Tn) + nsteps]);
     end
     Tn(n)     = t;
     VVn(:, n) = reshape(Vn, [5*N, 1]);

@@ -79,6 +79,7 @@ classdef (Abstract) VarFcnBase < matlab.mixin.Heterogeneous
         rho = GetDensity(obj, p, e)
         Gamma = GetBigGamma(obj, rho, e)
         DpDrho = GetDpDrho(obj, rho, e)
+        Pi = GetBigPi(obj, rho)
     end
     methods (Static)
         name = GetEOSName()

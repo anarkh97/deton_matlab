@@ -107,6 +107,13 @@ classdef VarFcnJWL < VarFcnBase
             end
             Gamma = obj.omega;
         end
+        function Pi = GetBigPi(obj, rho)
+            arguments
+               obj
+               rho double
+            end
+            Pi = -obj.Fun(rho);
+        end
     end
 %     private member functions
     methods (Access = private)

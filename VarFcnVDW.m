@@ -98,5 +98,14 @@ classdef VarFcnVDW < VarFcnBase
             end
             Gamma = obj.gamma1/(1 - obj.b*rho);
         end
+        function Pi = GetBigPi(obj, rho)
+            arguments
+               obj
+               rho double
+            end
+            
+            factor = obj.gamma1/(1 - obj.b*rho);
+            Pi = (1 - factor)*obj.a*rho*rho + (factor + 1)*obj.c;
+        end
     end
 end

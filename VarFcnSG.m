@@ -90,5 +90,12 @@ classdef VarFcnSG < VarFcnBase
             end
             Gamma = obj.gamma1;
         end
+        function Pi = GetBigPi(obj, rho)
+            arguments
+               obj
+               rho double
+            end
+            Pi = obj.gamma*obj.pstiff;
+        end
     end
 end

@@ -63,9 +63,10 @@ F_interm = 0.5*(F(:, 1:end-1) + F(:, 2:end) - nu.*(U(:, 2:end) - U(:, 1:end-1)))
 F = [F(:, 1) , F_interm , F(:, end)];
 
 % Compute source terms (lambda advection)
-S = zeros(5, N);
-u_x = [V(3, 1), V(3, :), V(3, end)];
-S(5, :) = (u_x(3:end) - u_x(1:end-2))/(2*dx);
+S       = zeros(5, N);
+u_x     = [V(3, 1), V(3, :), V(3, end)];
+du      = (u_x(3:end) - u_x(1:end-2))/(2*dx);
+S(5, :) = U(5, :).*du;
 
 % Forward Euler time stepping
 for i = 1:N

@@ -23,17 +23,18 @@ pIC = [1e9 1e5];    % pressure
 lambdaIC = [1-eps eps];   % volume fraction
 
 % Spatial domain
-N = 50;
+N = 500;
 x_in = 0; x_out = 1;
 dx = 1/N;
 x = (x_in + dx/2):dx:(x_out-dx/2);
 
 % Temporal parameters
 t      = 0; 
-dt     = 1e-5; 
-tf     = 1.0e-2;
+dt     = 1e-6; 
+tf     = 3.0e-4;
 n      = 0;
 nsteps = round(tf/dt);
+cflmax = 0.1;
 
 % Interface location
 % `x_int` stores the x co-ordinate of the material interface.
@@ -54,13 +55,13 @@ for i=1:N
     if x(i) <= x_interface
 %        Left of interface
         Vn(1, i)   = rhoIC(1);
-        Vn(2, i)   = rhoIC(2); %eps;
+        Vn(2, i)   = eps;
         Vn(3, i)   = uIC(1);
         Vn(4, i)   = pIC(1);
         Vn(5, i)   = lambdaIC(1); % + sign(x(i) - x_interface)*eps;
     else
 %        Right of interface
-        Vn(1, i)   = rhoIC(1); %eps;
+        Vn(1, i)   = eps;
         Vn(2, i)   = rhoIC(2);
         Vn(3, i)   = uIC(2);
         Vn(4, i)   = pIC(2);
@@ -74,32 +75,48 @@ end
 keys = reshape(1:5*N, 5, N);
 VVn = zeros(5*N, nsteps+1);
 VVn(:, 1) = reshape(Vn, [5*N, 1]);
+Tn = zeros(1, nsteps+1);
 
 % =================================================================================================
 % Time loop
 % =================================================================================================
 while t<=tf
 
+%     Check cfl condition
+    [dt, cfl] = CalculateCFLAndStepSize(dx, dt, cflmax, mixture, Vn);
+    
     n = n + 1;
     t = t + dt;
     
-    fprintf("Step %d: t = %e, dt = %e. Computation time: %.4e s.\n", n, t, dt, toc(start_time));
+    fprintf("Step %d: t = %e, dt = %e, cfl = %.4e. Computation time: %.4e s.\n", ...
+        n, t, dt, cfl, toc(start_time));
         
 %     Advance in time (uses forward euler method and Exact Riemann solver)
     Vn  = AdvanceOneTimeStep(Vn, mixture, x, dt);
     
 %     Save data and update loop
+    if (n >= numel(Tn))
+%         MatLab increases array size automatically. Included for clarity.
+        Tn  = padarray(Tn,  [0, numel(Tn) + nsteps], 'post');
+        VVn = padarray(VVn, [0, numel(Tn) + nsteps], 'post');
+    end
+    Tn(n)     = t;
     VVn(:, n) = reshape(Vn, [5*N, 1]);
 
 end
 
+% resize arrays
+Tn = Tn(1:n);
+VVn = VVn(:, 1:n);
+
 % Post processing (t = tf)
 close all
 
-rhot  = VVn(keys(1, :), :);
-ut    = VVn(keys(2, :), :);
-pt    = VVn(keys(3, :), :);
-t_vec = linspace(0, t, nsteps+1);
+lambdat = VVn(keys(5, :), :);
+rhot    = lambdat.*VVn(keys(1, :), :) + (1 - lambdat).*VVn(keys(2, :), :);
+ut      = VVn(keys(3, :), :);
+pt      = VVn(keys(4, :), :);
+t_vec   = Tn;
 
 % Density plot
 figure(1)
@@ -129,7 +146,7 @@ title('Pressure')
 txt = ['t = ' num2str(t_vec(end))];
 text(0.1,0.1,txt, 'Units', 'normalized');
 
-% Velocity plot
+% Velocity plot 
 figure(3)
 grid on;
 box on;
@@ -147,11 +164,13 @@ text(0.1,0.1,txt, 'Units', 'normalized');
 close all
 figure(4)
 ff = 20; % frames per second
-for n = 1:ff:nsteps
+for n=1:ff:numel(t_vec)
+    
+    
 % % % Toggle comments to plot different variables % % %
-%     plot(x, rhot(:, n), 'linewidth', 2); a = 1;
+    plot(x, rhot(:, n), 'linewidth', 2); a = 1;
 %     plot(x, ut(:, n), 'linewidth', 2); a = 2;
-    plot(x, pt(:, n), 'linewidth', 2); a = 3;
+%     plot(x, pt(:, n), 'linewidth', 2); a = 3;
 %     for k = 1:num_of_interfaces
 %         xline(XXn(k, n),'--', 'linewidth', 1)
 %     end

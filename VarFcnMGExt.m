@@ -192,6 +192,13 @@ classdef VarFcnMGExt < VarFcnBase
             rho = obj.rho0/(1.0 - eta);
   
         end
+        function Pi = GetBigPi(obj, rho)
+            arguments
+               obj
+               rho double
+            end
+            error("*** Error: VarFcnMGExt::GetBigPi() not implemented.\n");
+        end
 %         e is unused but added to be consistent
         function Gamma = GetBigGamma(obj, rho, e)
             arguments

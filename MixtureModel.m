@@ -91,16 +91,14 @@ classdef MixtureModel
             invrho = 1/rho;
         
 %             Avoid division by zero
-%             if U(5) < eps
-%                 V(1) = eps;
-%             elseif abs(1 - U(5)) < eps
-%                 V(2) = eps;
-%             else
-%                 V(1) = U(1)/U(5);
-%                 V(2) = U(2)/(1 - U(5));
-%             end
-            V(1) = U(1)/U(5);
-            V(2) = U(2)/(1 - U(5));
+            if U(5) < 1e-8
+                V(1) = eps;
+            elseif abs(1 - U(5)) < 1e-8
+                V(2) = eps;
+            else
+                V(1) = U(1)/U(5);
+                V(2) = U(2)/(1 - U(5));
+            end
             V(3) = U(3)*invrho;
             
             e = (U(4) - 0.5*rho*V(3)*V(3))*invrho;
@@ -117,43 +115,53 @@ classdef MixtureModel
                lambda double
             end
 
-            rho  = lambda*rho_1 + (1 - lambda)*rho_2;
-            p    = obj.GetPressure(rho_1, rho_2, e, lambda);
-            e_1  = obj.mat1.GetInternalEnergyPerUnitMass(rho_1, p);
-            e_2  = obj.mat2.GetInternalEnergyPerUnitMass(rho_2, p);
-            
-            try
-                c_1 = obj.mat1.GetSoundSpeed(rho_1, e_1);
-            catch ME
-                fprintf("%s\n", ME.message);
-                error("rho_1 = %e, e_1 = %e, p = %e\n", ...
-                    rho_1, e_1, p);
-            end
-            try
-                c_2 = obj.mat2.GetSoundSpeed(rho_2, e_2);
-            catch ME
-                fprintf("%s\n", ME.message);
-                error("rho_2 = %e, e_2 = %e, p = %e\n", ...
-                    rho_2, e_2, p);
-            end
+            if abs(1 - lambda) < 1e-8
+                % found a pure fluid, save computation
+                c = obj.mat1.GetSoundSpeed(rho_1, e);
+            elseif abs(lambda) < 1e-8
+                % found a pure fluid, save computation
+                c = obj.mat2.GetSoundSpeed(rho_2, e);
+            else
 
-            Gamma1 = obj.mat1.GetBigGamma(rho_1, e_1);
-            Gamma2 = obj.mat2.GetBigGamma(rho_2, e_2);
-            
-%             TODO: Need to check if these relations are valid.
-            Xi1    = 1/Gamma1;
-            Xi2    = 1/Gamma2;
-            Xi     = lambda*Xi1 + (1 - lambda)*Xi2;
-            
-            y1     = lambda*rho_1/rho;
-            y2     = (1 - lambda)*rho_2/rho;
-            
-            c2     = (y1*Xi1*c_1*c_1 + y2*Xi2*c_2*c_2)/Xi;
-            if c2 <= 0
-                error("*** Error: Cannot calculate speed of sound for the mixture " ...
-                    + "(Square-root of a negative number)")
+                rho  = lambda*rho_1 + (1 - lambda)*rho_2;
+                p    = obj.GetPressure(rho_1, rho_2, e, lambda);
+                e_1  = obj.mat1.GetInternalEnergyPerUnitMass(rho_1, p);
+                e_2  = obj.mat2.GetInternalEnergyPerUnitMass(rho_2, p);
+
+                try
+                    c_1 = obj.mat1.GetSoundSpeed(rho_1, e_1);
+                catch ME
+                    fprintf("%s\n", ME.message);
+                    error("rho_1 = %e, e_1 = %e, p = %e\n", ...
+                        rho_1, e_1, p);
+                end
+                try
+                    c_2 = obj.mat2.GetSoundSpeed(rho_2, e_2);
+                catch ME
+                    fprintf("%s\n", ME.message);
+                    error("rho_2 = %e, e_2 = %e, p = %e\n", ...
+                        rho_2, e_2, p);
+                end
+
+                Gamma1 = obj.mat1.GetBigGamma(rho_1, e_1);
+                Gamma2 = obj.mat2.GetBigGamma(rho_2, e_2);
+
+    %             TODO: Need to check if these relations are valid.
+                Xi1    = 1/Gamma1;
+                Xi2    = 1/Gamma2;
+                Xi     = lambda*Xi1 + (1 - lambda)*Xi2;
+
+                y1     = lambda*rho_1/rho;
+                y2     = (1 - lambda)*rho_2/rho;
+
+                c2     = (y1*Xi1*c_1*c_1 + y2*Xi2*c_2*c_2)/Xi;
+                if c2 <= 0
+                    error("*** Error: Cannot calculate speed of sound for the mixture " ...
+                        + "(Square-root of a negative number)")
+                end
+                c      = sqrt(c2);
+
             end
-            c      = sqrt(c2);
             
         end
         
@@ -166,26 +174,38 @@ classdef MixtureModel
                 lambda double
             end
             
-%             We solve the pressure equation iteratively. Solution should exist as for general
-%             equation of state (e.g., Mie_Gr\:uneisen) pressure can be defined explicitly in terms
-%             for fractional densities and internal energy (e). 
-%             NOTE: With iterative approach we can use existing implementations of VarFcn's w/o
-%             adding new functinalities.
-%             This might slow down the code.
-            try
-                if abs(1 - lambda) < 1e-8
-                    % found a pure fluid, save computation
-                    p = obj.mat1.GetPressure(rho_1, e);
-                elseif abs(lambda) < 1e-8
-                    % found a pure fluid, save computation
-                    p = obj.mat2.GetPressure(rho_2, e);
-                else
-                    eqn     = @(x) obj.Fun(rho_1, rho_2, e, lambda, x);
-                    options = optimoptions('fsolve', 'Display', 'none', 'MaxIterations', 20);
-                    p = fsolve(eqn, 0, options);
+            
+            if abs(1 - lambda) < 1e-8
+                % found a pure fluid, save computation
+                p = obj.mat1.GetPressure(rho_1, e);
+            elseif abs(lambda) < 1e-8
+                % found a pure fluid, save computation
+                p = obj.mat2.GetPressure(rho_2, e);
+            else
+                try
+%                     eqn     = @(x) obj.Fun(rho_1, rho_2, e, lambda, x);
+%                     options = optimoptions('fsolve', 'Display', 'iter', 'MaxIterations', 20);
+%                     p0 = lambda*obj.mat1.GetPressure(rho_1, e) ...
+%                         + (1 - lambda)*obj.mat2.GetPressure(rho_2, e);
+%                     p0 = 0;
+%                     [p, ~, exitflag, ~] = fsolve(eqn, p0, options);
+            
+                    rho       = lambda*rho_1 + (1 - lambda)*rho_2;
+                    Pi1       = obj.mat1.GetBigPi(rho_1);
+                    Pi2       = obj.mat2.GetBigPi(rho_2);
+                    
+%                     NOTE: most \Gamma do not depend on e. Included here to be consistent with M2C.
+                    Gamma1 = obj.mat1.GetBigGamma(rho_1, 0);
+                    Gamma2 = obj.mat2.GetBigGamma(rho_2, 0);
+                    
+                    numerator = rho*e - lambda*Pi1/Gamma1 - (1 - lambda)*Pi2/Gamma2;
+                    denomerat = lambda/Gamma1 + (1 - lambda)/Gamma2;
+                    
+                    p = numerator/denomerat;
+                                    
+                catch ME
+                    error("rho_1: %e, rho_2: %e, e: %e, lambda: %e\n", rho_1, rho_2, e, lambda);
                 end
-            catch ME
-                error("rho_1: %e, rho_2: %e, e: %e, lambda: %e\n", rho_1, rho_2, e, lambda);
             end
             
         end
@@ -222,8 +242,11 @@ classdef MixtureModel
             
             rho    = lambda*rho_1 + (1 - lambda)*rho_2;
             
-            term1  = lambda*rho_1*obj.mat1.GetInternalEnergyPerUnitMass(rho_1, p);
-            term2  = (1 - lambda)*rho_2*obj.mat2.GetInternalEnergyPerUnitMass(rho_2, p);
+            e_1 = obj.mat1.GetInternalEnergyPerUnitMass(rho_1, p);
+            e_2 = obj.mat2.GetInternalEnergyPerUnitMass(rho_2, p);
+            
+            term1  = lambda*rho_1*e_1;
+            term2  = (1 - lambda)*rho_2*e_2;
             
             r = rho*e - term1 - term2;
         end

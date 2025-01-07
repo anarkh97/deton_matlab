@@ -37,8 +37,9 @@ for i=1:N
     rho = lambda*rho_1 + (1 - lambda)*rho_2;
     e   = mixture.GetInternalEnergyPerUnitMass(rho_1, rho_2, p, lambda);
     try
-    c   = mixture.GetSoundSpeed(rho_1, rho_2, e, lambda);
+        c   = mixture.GetSoundSpeed(rho_1, rho_2, e, lambda);
     catch ME
+        fprintf("%s\n", ME.message);
         error("*** Error: Negative speed of sound encountered at Point[%d] x = %e. " ...
             + "The state variables are (%e, %e, %e).", ...
             i, x(i), rho, u, p);

@@ -2,25 +2,24 @@ clear;
 close all;
 clc;
 
-% This code simulates the PG-PG example case from Arthur Rallu's thesis Section 4.8
-% Here, we model both materials with Stiffened gas equation of state with pstiff = 0.
-% We use the five equation model, which tracks the fractional density of each fluid 
-% material. The volume fraction of fluid material is advected in space and time to
+% This code simulates the SG-VDW example case from https://doi.org/10.1006/jcph.2002.7143 
+% Section 8.3. We use the five equation model, which tracks the fractional density of 
+% each fluid material. The volume fraction of fluid material is advected in space and time to
 % calculate relevant pressure and internal energy in the control volume.
 % NOTE: This code is intended to work only for two fluid materials. The code will
 % be expanded further to incorporate a reaction equation, and eventually simulate 
 % 1-D detonations.
 
-% units: g, mm, s, Pa
+% units: kg, m, s, Pa
 
 % Mixture model -- has two fluid materials (i.e. VarFcn's).
-mixture = MixtureModel(VarFcnSG(1.4, 0), VarFcnSG(1.667, 0));
+mixture = MixtureModel(VarFcnSG(4.4, 6e8), VarFcnVDW(1.4, 5, 1e-3, 0));
 
 % Initial Conditions
 % User inputs
-rhoIC = [1.0 1.0];  % density 
+rhoIC = [1000 50];  % density 
 uIC = [0 0];        % velocity
-pIC = [500 0.2];    % pressure
+pIC = [1e9 1e5];    % pressure
 lambdaIC = [1-eps eps];   % volume fraction
 
 % Spatial domain
@@ -32,13 +31,13 @@ x = (x_in + dx/2):dx:(x_out-dx/2);
 % Temporal parameters
 t      = 0; 
 dt     = 1e-5; 
-tf     = 1.5e-2;
+tf     = 1.0e-2;
 n      = 0;
 nsteps = round(tf/dt);
 
 % Interface location
 % `x_int` stores the x co-ordinate of the material interface.
-x_interface = 0.5;
+x_interface = 0.7;
 
 start_time = tic;
 

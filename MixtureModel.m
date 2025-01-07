@@ -122,8 +122,20 @@ classdef MixtureModel
             e_1  = obj.mat1.GetInternalEnergyPerUnitMass(rho_1, p);
             e_2  = obj.mat2.GetInternalEnergyPerUnitMass(rho_2, p);
             
-            c_1 = obj.mat1.GetSoundSpeed(rho_1, e_1);
-            c_2 = obj.mat2.GetSoundSpeed(rho_2, e_2);
+            try
+                c_1 = obj.mat1.GetSoundSpeed(rho_1, e_1);
+            catch ME
+                fprintf("%s\n", ME.message);
+                error("rho_1 = %e, e_1 = %e, p = %e\n", ...
+                    rho_1, e_1, p);
+            end
+            try
+                c_2 = obj.mat2.GetSoundSpeed(rho_2, e_2);
+            catch ME
+                fprintf("%s\n", ME.message);
+                error("rho_2 = %e, e_2 = %e, p = %e\n", ...
+                    rho_2, e_2, p);
+            end
 
             Gamma1 = obj.mat1.GetBigGamma(rho_1, e_1);
             Gamma2 = obj.mat2.GetBigGamma(rho_2, e_2);
@@ -161,10 +173,10 @@ classdef MixtureModel
 %             adding new functinalities.
 %             This might slow down the code.
             try
-                if abs(lambda) < eps
+                if abs(1 - lambda) < 1e-8
                     % found a pure fluid, save computation
                     p = obj.mat1.GetPressure(rho_1, e);
-                elseif abs(1 - lambda) < eps
+                elseif abs(lambda) < 1e-8
                     % found a pure fluid, save computation
                     p = obj.mat2.GetPressure(rho_2, e);
                 else
@@ -190,7 +202,7 @@ classdef MixtureModel
             e_2 = obj.mat2.GetInternalEnergyPerUnitMass(rho_2, p);
             
             rho    = lambda*rho_1 + (1 - lambda)*rho_2;
-            e      = (rho_1*e_1 + rho_2*e_2)/rho;
+            e      = (lambda*rho_1*e_1 + (1 - lambda)*rho_2*e_2)/rho;
             
         end
         

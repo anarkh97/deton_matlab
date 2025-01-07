@@ -15,6 +15,13 @@ classdef VarFcnSG < VarFcnBase
         gamma1 double % gamma - 1
         invgamma1 double % 1/(gamma - 1)
     end
+    methods (Static)
+       
+        function name = GetEOSName()
+            name = "SG EOS";
+        end
+         
+    end
 %     public member functions
     methods (Access = public)
 %         constructor

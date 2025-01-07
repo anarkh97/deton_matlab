@@ -65,7 +65,8 @@ classdef (Abstract) VarFcnBase < matlab.mixin.Heterogeneous
             end
             c2 = obj.GetDpDrho(rho, e) + obj.GetPressure(rho, e)/rho*obj.GetBigGamma(rho, e);
             if c2 <= 0
-                error("*** Error: Cannot calculate speed of sound (Square-root of a negative number)")
+                error("*** Error: Cannot calculate speed of sound for %s " ...
+                    + "(Square-root of a negative number)", obj.GetEOSName());
             end
             c = sqrt(c2);
         end
@@ -78,6 +79,9 @@ classdef (Abstract) VarFcnBase < matlab.mixin.Heterogeneous
         rho = GetDensity(obj, p, e)
         Gamma = GetBigGamma(obj, rho, e)
         DpDrho = GetDpDrho(obj, rho, e)
+    end
+    methods (Static)
+        name = GetEOSName()
     end
     
 end

@@ -50,6 +50,13 @@ classdef VarFcnJWL < VarFcnBase
             
         end
     end
+    methods (Static)
+       
+        function name = GetEOSName()
+            name = "JWL EOS";
+        end
+         
+    end
     methods (Access = public) % set access based on VarFcnBase
         function p = GetPressure(obj, rho, e)
             arguments

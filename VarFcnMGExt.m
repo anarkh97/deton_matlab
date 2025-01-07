@@ -25,6 +25,13 @@ classdef VarFcnMGExt < VarFcnBase
         
 %         h0 double % reference enthalpy at T0
     end
+    methods (Static)
+       
+        function name = GetEOSName()
+            name = "MG Ext. EOS";
+        end
+         
+    end
 %     public member functions
     methods (Access = public)
 %         constructor

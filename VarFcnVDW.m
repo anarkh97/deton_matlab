@@ -14,6 +14,13 @@ classdef VarFcnVDW < VarFcnBase
         invgamma double % 1/gamma
         gamma1 double % gamma - 1
     end
+    methods (Static)
+       
+        function name = GetEOSName()
+            name = "VDW EOS";
+        end
+         
+    end
 %     public member functions
     methods (Access = public)
 %         constructor

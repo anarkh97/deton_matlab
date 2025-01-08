@@ -35,7 +35,7 @@ for i=1:N
     E   = U(4, i);
     
     rho = lambda*rho_1 + (1 - lambda)*rho_2;
-    e   = mixture.GetInternalEnergyPerUnitMass(rho_1, rho_2, p, lambda);
+    e   = (E - 0.5*rho*u*u)/rho;
     try
         c   = mixture.GetSoundSpeed(rho_1, rho_2, e, lambda);
     catch ME
